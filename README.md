@@ -1,104 +1,47 @@
 # Chemo Regimen Dose Safety Agent
 
-> **Domain:** Medical Oncology & Cancer Staging Systems  
-> **Reference Guidelines & Standards:** `AJCC Cancer Staging Manual & NCCN Clinical Practice Guidelines`
-
-<div align="center">
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
-
-</div>
+> **Domain:** Medical Oncology, Clinical Pharmacology & Patient Safety  
+> **Clinical Guidelines & Standards:** ASCO/ONS Chemotherapy Administration Safety Standards, NCCN Chemotherapy Order Templates, CPIC Pharmacogenomic Guidelines, CAP/CLSI Analytical Standards
 
 ---
 
-## 📖 What It Does
+## 📖 Clinical Overview
 
-**Chemo Regimen Dose Safety Agent** is an advanced analytical and computational platform implementing BSA-Adjusted Antineoplastic Regimen & Lifetime Limit Auditor.
+The **Chemo Regimen Dose Safety Agent** provides automated independent verification of antineoplastic chemotherapy orders prior to pharmacy dispensing and clinical administration. It cross-checks body surface area (BSA) calculations, enforces standard regimen dose capping rules, tracks cumulative lifetime anthracycline/bleomycin toxicity limits, and screens for pharmacogenomic toxicity variants (e.g., *DPYD*, *TPMT*, *UGT1A1*).
 
----
+### Algorithmic Guardrails & Verification Modules
 
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-### 🔬 Core Algorithmic & Evaluation Engines
-
-- **`Severity`** — dedicated module for severity evaluation and state verification.
-- **`DomainKnowledgeRegistry`**: Enterprise domain rules, guideline matrices, and evidence benchmarks.
-- **`AgentAlert`** — dedicated module for agent alert evaluation and state verification.
-- **`BSADoseCapAuditorAgent`**: Specialized Sub-Agent 1 for chemo-regimen-dose-safety-agent
-- **`LifetimeToxicityLimitAgent`**: Specialized Sub-Agent 2 for chemo-regimen-dose-safety-agent
-- **`PharmacogenomicScreenAgent`**: Specialized Sub-Agent 3 for chemo-regimen-dose-safety-agent
+| Safety Module | Clinical Parameter Checked | Safety Threshold / Guideline | Intervention |
+|:---|:---|:---|:---|
+| **BSA Dose Cap Auditor** | Body Surface Area calculation (Mosteller / DuBois) | Cap standard doses at $BSA = 2.0 - 2.2\,\text{m}^2$ (e.g., Vincristine 2 mg max) | Hard dose cap warning |
+| **Lifetime Toxicity Limit Tracker** | Cumulative anthracycline (Doxorubicin) / Bleomycin exposure | Doxorubicin $\le 450 - 550\,\text{mg/m}^2$, Bleomycin $\le 400\,\text{units}$ | Critical cardiotoxicity / pulmonary toxicity halt |
+| **Pharmacogenomic Screen** | *DPYD*, *TPMT*, *NUDT15*, *UGT1A1* genotype alerts | Intermediate or poor metabolizer phenotypes | 50% dose reduction or alternative drug |
+| **Organ Dysfunction Adjustments** | CrCl (Cockcroft-Gault) & Total Bilirubin/AST | Renal (Cisplatin, Carboplatin AUC) & Hepatic dose adjustments | Dose recalibration recommendation |
 
 ---
 
 ## 💻 CLI Quickstart & Usage
 
-### 1. Guided Interactive Mode
+### 1. Single Task / Regimen Audit
 ```bash
-python cli.py
+python cli.py audit --task-id REG-001 --target DOXORUBICIN --primary 25.4 --secondary 14.2 --status NORMAL
 ```
 
-### 2. Direct Parameterized Evaluation
+### 2. Batch Process Chemotherapy Orders CSV
 ```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
+python cli.py batch -i sample.csv -o out_results.csv
 ```
 
-### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
-
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `case_id` | Parameter / observation metric | Required |
-| `patient_synthetic_id` | Parameter / observation metric | Required |
-| `metric_primary` | Parameter / observation metric | Required |
-| `metric_secondary` | Parameter / observation metric | Required |
-| `is_stat` | Parameter / observation metric | Required |
-| `status_flag` | Parameter / observation metric | Required |
-
----
-
-## 🛡️ Security & Enterprise Architecture
-
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
-
+### 3. Verify HMAC Cryptographic Audit Trail
 ```bash
-pytest -v
-```
-
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py --tasks 1000 --concurrency 8
+python cli.py verify-audit
 ```
 
 ---
 
-## 🐳 Container Deployment
+## 🧪 Verification & Testing
 
+Execute comprehensive unit tests via pytest:
 ```bash
-docker build -t chemo-regimen-dose-safety-agent .
-docker run -p 8000:8000 chemo-regimen-dose-safety-agent
+python -m pytest -p no:zarr
 ```
