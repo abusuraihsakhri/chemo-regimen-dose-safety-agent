@@ -148,7 +148,7 @@ def main(argv=None) -> int:
             input_path = Path(args.input)
             output_path = Path(args.output)
             with input_path.open("r", encoding="utf-8-sig", newline="") as handle:
-                reader = cs.DictReader(handle)
+                reader = csv.DictReader(handle)
                 rows = list(reader)
                 source_fields = list(reader.fieldnames or [])
 
@@ -169,7 +169,7 @@ def main(argv=None) -> int:
 
             output_fields = source_fields + [field for field in CSV_OUTPUT_FIELDS if field not in source_fields]
             with output_path.open("w", encoding="utf-8", newline="") as handle:
-                writer = cs.DictWriter(handle, fieldnames=output_fields)
+                writer = csv.DictWriter(handle, fieldnames=output_fields)
                 writer.writeheader()
                 writer.writerows(output_rows)
             print(f"Processed {len(output_rows)} row(s) -> {output_path}")
