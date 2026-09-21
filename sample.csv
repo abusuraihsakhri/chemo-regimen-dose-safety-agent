@@ -1,4 +1,4 @@
-case_id,patient_synthetic_id,metric_primary,metric_secondary,is_stat,status_flag
-CASE-001,SYNTH-01,25.4,14.2,True,DISCORDANT
-CASE-002,SYNTH-02,12.0,4.1,False,NORMAL
-CASE-003,SYNTH-03,32.0,18.5,True,SUSPICIOUS
+case_id,height_cm,weight_kg,reference_dose_mg_per_m2,ordered_dose_mg,bsa_cap_m2,absolute_cap_mg,previous_cumulative_mg_per_m2,cumulative_limit_mg_per_m2,deviation_tolerance_percent
+CASE-001,170,70,50,91,,,,,5
+CASE-002,180,110,2,2,2.0,2,,,5
+CASE-003,165,60,60,100,,,380,450,5
