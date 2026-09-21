@@ -1,58 +1,50 @@
-"""
-FastAPI REST Application & Webhooks for ChemoGuard: BSA-Adjusted Antineoplastic Regimen & Lifetime Dose Safety Agent.
-"""
-from typing import Dict, Any, Optional
-from .models import ClinicalCasePayload
-from .agents import ChemoGuardCoordinator
+"""Optional FastAPI wrapper around the deterministic calculation engine."""
+from __future__ import annotations
 
-coordinator = ChemoGuardCoordinator()
+from . import __version__
+from .engine import InputValidationError, audit_order
+from .models import OrderInput
+
 
 def create_app():
     try:
-        from fastapi import FastAPI
-        from pydantic import BaseModel
+        from fastapi import FastAPI, HTTPException
+        from pydantic import BaseModel, ConfigDict
+    except ImportError as exc:  # pragma: no cover - exercised by CLI import guard
+        raise ImportError("Install the API dependencies with: pip install '.[api]'") from exc
 
-        app = FastAPI(
-            title="ChemoGuard: BSA-Adjusted Antineoplastic Regimen & Lifetime Dose Safety Agent",
-            description="Audits distributed component chemotherapy regimens (mFOLFIRINOX, AC-T, R-CHOP) for BSA dose caps, bleomycin pulmonary limits, and DPD/TPMT deficiency.",
-            version="2.0.0-PRO",
-        )
+    app = FastAPI(
+        title="Chemo Regimen Dose Safety Calculator API",
+        description=(
+            "Deterministic BSA-based dose calculations using user-supplied protocol limits. "
+            "This API does not encode regimen-specific prescribing recommendations."
+        ),
+        version=__version__,
+    )
 
-        class AuditRequest(BaseModel):
-            case_id: str = "CASE-2026-001"
-            patient_synthetic_id: str = "SYNTH-PT-881"
-            primary_metric: float = 24.5
-            secondary_metric: float = 14.0
-            status_flag: str = "DISCORDANT"
-            is_stat: bool = True
-            clinical_notes: str = ""
-            biomarkers: Dict[str, Any] = {}
+    class AuditRequest(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        case_id: str = "CASE-001"
+        height_cm: float
+        weight_kg: float
+        reference_dose_mg_per_m2: float
+        ordered_dose_mg: float
+        bsa_cap_m2: float | None = None
+        absolute_cap_mg: float | None = None
+        previous_cumulative_mg_per_m2: float | None = None
+        cumulative_limit_mg_per_m2: float | None = None
+        deviation_tolerance_percent: float = 5.0
 
-        class ChatRequest(BaseModel):
-            query: str
+    @app.get("/health")
+    def health():
+        return {"status": "ok", "version": __version__}
 
-        @app.get("/health")
-        def health():
-            return {"status": "HEALTHY", "system": "chemo-regimen-dose-safety-agent", "domain": "Medical Oncology", "version": "2.0.0-PRO"}
+    @app.post("/api/audit")
+    def api_audit(request: AuditRequest):
+        try:
+            result = audit_order(OrderInput(**request.model_dump()))
+        except InputValidationError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return result.to_dict()
 
-        @app.post("/api/audit")
-        def api_audit(req: AuditRequest):
-            payload = ClinicalCasePayload(
-                case_id=req.case_id,
-                patient_synthetic_id=req.patient_synthetic_id,
-                primary_metric=req.primary_metric,
-                secondary_metric=req.secondary_metric,
-                status_flag=req.status_flag,
-                is_stat=req.is_stat,
-                clinical_notes=req.clinical_notes,
-                biomarkers=req.biomarkers,
-            )
-            return coordinator.process_case(payload)
-
-        @app.post("/api/chat")
-        def api_chat(req: ChatRequest):
-            return {"response": coordinator.query_supervisory_chat(req.query)}
-
-        return app
-    except ImportError:
-        return None
+    return app

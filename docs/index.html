@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Browser-based BSA dose calculation and user-defined chemotherapy order checks.">
+  <meta name="color-scheme" content="light dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Chemo Regimen Dose Safety Calculator</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Dose calculation utility</p>
+        <h1>Chemo Regimen Dose Safety</h1>
+      </div>
+      <div class="top-actions">
+        <button id="load-example" class="button secondary" type="button">Example</button>
+        <button id="theme-toggle" class="button icon-button" type="button" aria-pressed="false" aria-label="Toggle dark mode"><span>Dark</span></button>
+      </div>
+    </header>
+
+    <p class="scope">Calculates Mosteller BSA, a reference dose, order variance, and optional cumulative exposure using values you provide. It does not select regimens or provide treatment recommendations.</p>
+
+    <div class="workspace">
+      <section class="card input-card" aria-labelledby="input-heading">
+        <div class="card-heading">
+          <div><p class="step">01</p><h2 id="input-heading">Order inputs</h2></div>
+          <span class="privacy">Local calculation</span>
+        </div>
+        <form id="dose-form">
+          <div class="field-grid">
+            <label class="span-2">Case ID<input name="case_id" value="CASE-001" autocomplete="off" required></label>
+            <label>Height <span>cm</span><input name="height_cm" type="number" min="0.01" step="any" value="170" required inputmode="decimal"></label>
+            <label>Weight <span>kg</span><input name="weight_kg" type="number" min="0.01" step="any" value="70" required inputmode="decimal"></label>
+            <label>Reference dose <span>mg/m²</span><input name="reference_dose_mg_per_m2" type="number" min="0.01" step="any" value="75" required inputmode="decimal"></label>
+            <label>Ordered dose <span>mg</span><input name="ordered_dose_mg" type="number" min="0.01" step="any" value="135" required inputmode="decimal"></label>
+          </div>
+
+          <details>
+            <summary>Optional protocol parameters</summary>
+            <div class="field-grid optional-grid">
+              <label>BSA cap <span>m²</span><input name="bsa_cap_m2" type="number" min="0.01" step="any" placeholder="Not set" inputmode="decimal"></label>
+              <label>Absolute cap <span>mg</span><input name="absolute_cap_mg" type="number" min="0.01" step="any" placeholder="Not set" inputmode="decimal"></label>
+              <label>Previous cumulative <span>mg/m²</span><input name="previous_cumulative_mg_per_m2" type="number" min="0" step="any" placeholder="Not set" inputmode="decimal"></label>
+              <label>Cumulative limit <span>mg/m²</span><input name="cumulative_limit_mg_per_m2" type="number" min="0.01" step="any" placeholder="Not set" inputmode="decimal"></label>
+              <label>Variance tolerance <span>%</span><input name="deviation_tolerance_percent" type="number" min="0" step="any" value="5" inputmode="decimal"></label>
+            </div>
+          </details>
+
+          <p id="form-error" class="error" role="alert" aria-live="polite"></p>
+          <div class="form-actions">
+            <button class="button primary" type="submit">Calculate</button>
+            <button class="button secondary" type="reset">Reset</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="results" class="card result-card" aria-labelledby="result-heading" aria-live="polite" hidden>
+        <div class="card-heading result-heading">
+          <div><p class="step">02</p><h2 id="result-heading">Calculation</h2></div>
+          <strong id="result-status" class="status"></strong>
+        </div>
+        <dl id="result-metrics" class="metrics"></dl>
+        <ul id="result-flags" class="flags"></ul>
+      </section>
+
+      <aside class="card note-card">
+        <div class="card-heading"><div><p class="step">Scope</p><h2>Use limitations</h2></div></div>
+        <p>Protocol thresholds are intentionally not embedded. Enter caps and cumulative limits only from a validated regimen/protocol for the relevant drug and patient context.</p>
+        <p>No data are sent anywhere by this page. Avoid entering direct identifiers on shared devices.</p>
+      </aside>
+    </div>
+  </main>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
